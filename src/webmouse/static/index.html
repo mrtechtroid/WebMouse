@@ -1,0 +1,215 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <meta name="color-scheme" content="light dark">
+  <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#09090b" media="(prefers-color-scheme: dark)">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <title>webmouse</title>
+  <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/static/app.css">
+  <script src="/static/theme.js"></script>
+</head>
+<body>
+  <!-- Sign in -->
+  <section id="login" class="center" hidden>
+    <form id="login-form" class="card login-card" autocomplete="off">
+      <div class="card-header">
+        <h1 class="card-title">Connect to your computer</h1>
+        <p class="card-desc">Enter the PIN shown in the terminal where webmouse is running.</p>
+      </div>
+      <div class="card-content stack">
+        <div class="field">
+          <label class="label" for="login-name">Device name</label>
+          <input id="login-name" class="input" maxlength="32" placeholder="My phone" autocomplete="off">
+        </div>
+        <div class="field">
+          <label class="label" for="login-pin">PIN</label>
+          <input id="login-pin" class="input" inputmode="numeric" autocomplete="one-time-code" maxlength="12" placeholder="123456" required>
+        </div>
+        <p id="login-error" class="error" role="alert" hidden></p>
+      </div>
+      <div class="card-footer">
+        <button id="login-submit" class="btn btn-primary btn-block" type="submit">Connect</button>
+      </div>
+    </form>
+  </section>
+
+  <!-- App -->
+  <div id="main" hidden>
+    <header class="topbar">
+      <div class="brand"><span data-icon="mouse"></span><span>webmouse</span></div>
+      <div class="topbar-right">
+        <span id="status" class="badge" data-state="connecting"><span class="dot"></span><span id="status-text">Connecting</span></span>
+        <button id="fullscreen-btn" class="btn btn-ghost btn-icon" aria-label="Fullscreen" hidden><span data-icon="maximize"></span></button>
+        <button id="theme-btn" class="btn btn-ghost btn-icon" aria-label="Toggle theme"><span data-icon="sun" id="theme-icon"></span></button>
+      </div>
+    </header>
+
+    <nav class="tabs" role="tablist" aria-label="Sections">
+      <button class="tab" role="tab" data-tab="touchpad" aria-selected="true"><span data-icon="mouse"></span>Touchpad</button>
+      <button class="tab" role="tab" data-tab="keyboard" aria-selected="false"><span data-icon="keyboard"></span>Keyboard</button>
+      <button class="tab" role="tab" data-tab="settings" aria-selected="false"><span data-icon="sliders"></span>Settings</button>
+    </nav>
+
+    <main>
+      <!-- Touchpad -->
+      <section id="tab-touchpad" class="panel" role="tabpanel">
+        <div class="toolbar">
+          <div class="toggle-group" data-setting="mode" role="group" aria-label="Pointer mode">
+            <button class="toggle" data-value="relative">Relative</button>
+            <button class="toggle" data-value="absolute">Absolute</button>
+          </div>
+          <div class="switch-row">
+            <span id="stream-label">Screen</span>
+            <button id="stream-switch" class="switch" role="switch" aria-checked="false" aria-labelledby="stream-label" data-setting="stream"><span class="thumb"></span></button>
+          </div>
+        </div>
+        <div class="pad-area" id="pad-area">
+          <div class="pad" id="pad">
+            <img id="stream" class="stream" alt="" draggable="false" hidden>
+            <p class="pad-hint" id="pad-hint"></p>
+          </div>
+        </div>
+        <div class="mouse-buttons" id="mouse-buttons">
+          <button class="btn btn-outline mbtn" data-btn="left">Left</button>
+          <button class="btn btn-outline mbtn mbtn-mid" data-btn="middle">Middle</button>
+          <button class="btn btn-outline mbtn" data-btn="right">Right</button>
+        </div>
+      </section>
+
+      <!-- Keyboard -->
+      <section id="tab-keyboard" class="panel panel-scroll" role="tabpanel" hidden>
+        <div class="card">
+          <div class="card-content stack">
+            <label class="label" for="kb-input">Type on your computer</label>
+            <input id="kb-input" class="input" enterkeyhint="enter" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="Tap here and start typing">
+            <p class="muted small">Everything you type is sent to the focused window on your computer.</p>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header"><h2 class="card-title sm">Modifiers</h2><p class="card-desc">Tap once for the next key. Tap twice to hold until you tap again.</p></div>
+          <div class="card-content"><div class="key-row" id="mod-row"></div></div>
+        </div>
+        <div class="card">
+          <div class="card-header"><h2 class="card-title sm">Keys</h2></div>
+          <div class="card-content stack">
+            <div class="key-grid" id="key-main"></div>
+            <div class="key-split">
+              <div class="arrows" id="key-arrows"></div>
+              <div class="key-grid key-grid-2" id="key-nav"></div>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header"><h2 class="card-title sm">Shortcuts</h2></div>
+          <div class="card-content"><div class="key-grid" id="key-shortcuts"></div></div>
+        </div>
+        <div class="card">
+          <div class="card-header"><h2 class="card-title sm">Function keys</h2></div>
+          <div class="card-content"><div class="key-scroll" id="key-fn"></div></div>
+        </div>
+        <div class="card">
+          <div class="card-header"><h2 class="card-title sm">Media</h2></div>
+          <div class="card-content"><div class="key-grid" id="key-media"></div></div>
+        </div>
+      </section>
+
+      <!-- Settings -->
+      <section id="tab-settings" class="panel panel-scroll" role="tabpanel" hidden>
+        <div class="card">
+          <div class="card-header"><h2 class="card-title sm">This device</h2><p class="card-desc">The name shown on your computer and to other paired devices.</p></div>
+          <div class="card-content stack">
+            <div class="row-inline">
+              <input id="device-name" class="input" maxlength="32" aria-label="Device name" placeholder="My phone">
+              <button id="device-save" class="btn btn-secondary">Save</button>
+            </div>
+            <div class="separator"></div>
+            <div>
+              <p class="label">Paired devices</p>
+              <ul id="devices" class="list"></ul>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header"><h2 class="card-title sm">Appearance</h2></div>
+          <div class="card-content">
+            <div class="toggle-group" data-setting="theme" role="group" aria-label="Theme">
+              <button class="toggle" data-value="system">System</button>
+              <button class="toggle" data-value="light">Light</button>
+              <button class="toggle" data-value="dark">Dark</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header"><h2 class="card-title sm">Touchpad</h2></div>
+          <div class="card-content stack">
+            <div class="field">
+              <div class="field-head"><label class="label" for="s-sensitivity">Pointer speed</label><span class="muted small" data-value-for="sensitivity"></span></div>
+              <input id="s-sensitivity" type="range" min="0.3" max="3" step="0.1" data-setting="sensitivity">
+            </div>
+            <div class="field">
+              <div class="field-head"><label class="label" for="s-acceleration">Acceleration</label><span class="muted small" data-value-for="acceleration"></span></div>
+              <input id="s-acceleration" type="range" min="0" max="1" step="0.05" data-setting="acceleration">
+            </div>
+            <div class="field">
+              <div class="field-head"><label class="label" for="s-scroll">Scroll speed</label><span class="muted small" data-value-for="scrollSpeed"></span></div>
+              <input id="s-scroll" type="range" min="0.3" max="3" step="0.1" data-setting="scrollSpeed">
+            </div>
+            <div class="separator"></div>
+            <div class="switch-row"><span id="l-natural">Natural scrolling</span><button class="switch" role="switch" aria-checked="false" aria-labelledby="l-natural" data-setting="naturalScroll"><span class="thumb"></span></button></div>
+            <div class="switch-row"><span id="l-tap">Tap to click</span><button class="switch" role="switch" aria-checked="false" aria-labelledby="l-tap" data-setting="tapToClick"><span class="thumb"></span></button></div>
+            <div class="switch-row"><span id="l-buttons">Show mouse buttons</span><button class="switch" role="switch" aria-checked="false" aria-labelledby="l-buttons" data-setting="showButtons"><span class="thumb"></span></button></div>
+            <div class="switch-row"><span id="l-haptics">Vibrate on click</span><button class="switch" role="switch" aria-checked="false" aria-labelledby="l-haptics" data-setting="haptics"><span class="thumb"></span></button></div>
+            <div class="separator"></div>
+            <div class="field">
+              <p class="label">Stylus</p>
+              <div class="toggle-group" data-setting="penMode" role="group" aria-label="Stylus behaviour">
+                <button class="toggle" data-value="direct">Direct</button>
+                <button class="toggle" data-value="touchpad">Like a finger</button>
+              </div>
+              <p class="muted small">Direct maps the pad to the screen. Touching down presses the left button, the barrel button right-clicks.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header"><h2 class="card-title sm">Screen</h2></div>
+          <div class="card-content stack">
+            <div class="field" id="monitor-field" hidden>
+              <label class="label" for="s-monitor">Monitor</label>
+              <select id="s-monitor" class="input" data-setting="monitor"></select>
+            </div>
+            <div class="field">
+              <p class="label">Stream quality</p>
+              <div class="toggle-group" data-setting="quality" role="group" aria-label="Stream quality">
+                <button class="toggle" data-value="low">Low</button>
+                <button class="toggle" data-value="balanced">Balanced</button>
+                <button class="toggle" data-value="high">High</button>
+              </div>
+            </div>
+            <p id="stream-note" class="muted small"></p>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header"><h2 class="card-title sm">Connection</h2></div>
+          <div class="card-content stack">
+            <div class="switch-row"><span id="l-awake">Keep screen on</span><button class="switch" role="switch" aria-checked="false" aria-labelledby="l-awake" data-setting="keepAwake"><span class="thumb"></span></button></div>
+            <p id="server-info" class="muted small"></p>
+            <button id="logout-btn" class="btn btn-outline">Disconnect this device</button>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+  <script src="/static/app.js" defer></script>
+</body>
+</html>
